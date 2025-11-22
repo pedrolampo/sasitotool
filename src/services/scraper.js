@@ -1,5 +1,4 @@
-import ExcelJS from 'exceljs';
-import fs from 'fs';
+import { chromium } from 'playwright';
 
 function buildPageUrl(currentUrl, pageNumber) {
   try {
@@ -16,31 +15,9 @@ function buildPageUrl(currentUrl, pageNumber) {
     urlObj.pathname = '/' + pathSegments.join('/');
     return urlObj.toString();
   } catch (e) {
-    console.error('Error construyendo URL, usando fallback simple:', e);
+    console.error('Error construyendo URL fallback:', e);
     return currentUrl + '/' + pageNumber;
   }
-}
-
-function parseUsdPrice(priceStr) {
-  if (!priceStr) return null;
-  let num = priceStr.replace(/[^\d.,]/g, '');
-  if (!num) return null;
-
-  const hasComma = num.includes(',');
-  const hasDot = num.includes('.');
-
-  let normalized;
-  if (hasComma && hasDot) {
-    normalized = num.replace(/\./g, '').replace(',', '.');
-  } else if (hasComma && !hasDot) {
-    normalized = num.replace(',', '.');
-  } else {
-    normalized = num;
-  }
-
-  const value = parseFloat(normalized);
-  if (Number.isNaN(value)) return null;
-  return value;
 }
 
 async function scrapeSinglePage(page, url, onLog) {
@@ -100,8 +77,6 @@ export async function scrapePsOffers(
   pageCount = 1,
   onLog = () => {}
 ) {
-  const { chromium } = await import('playwright');
-
   onLog('=== Iniciando Motor de Scraping ===');
 
   const browser = await chromium.launch({
@@ -149,7 +124,7 @@ export async function scrapePsOffers(
     await browser.close();
   }
 
-  onLog('Limpando duplicados...');
+  onLog('Limpiando duplicados...');
   const deduped = [];
   const seenKeys = new Set();
   for (const g of allGames) {
@@ -161,91 +136,4 @@ export async function scrapePsOffers(
 
   onLog(`✅ FINALIZADO. Total únicos: ${deduped.length}`);
   return deduped;
-}
-
-export async function exportToExcel(
-  games,
-  filePath = 'juegos-psstore.xlsx',
-  exchangeRate = null
-) {
-  const workbook = new ExcelJS.Workbook();
-  const sheet = workbook.addWorksheet('Ofertas');
-
-  const baseColumns = [
-    { header: 'Nombre', key: 'name', width: 50 },
-    { header: 'Plataformas', key: 'platforms', width: 20 },
-    { header: 'Precio (USD)', key: 'price', width: 15 },
-  ];
-
-  const extraColumns = [];
-  if (exchangeRate) {
-    extraColumns.push({
-      header: `Precio (ARS) @ ${exchangeRate}`,
-      key: 'priceArs',
-      width: 18,
-    });
-  }
-
-  const tailColumns = [
-    { header: 'Descuento', key: 'discount', width: 12 },
-    { header: 'URL', key: 'productUrl', width: 60 },
-  ];
-
-  sheet.columns = [...baseColumns, ...extraColumns, ...tailColumns];
-
-  games.forEach((g) => {
-    const priceUsdNum = parseUsdPrice(g.price);
-    let priceArs = '';
-    if (exchangeRate && priceUsdNum != null) {
-      const value = priceUsdNum * exchangeRate;
-      priceArs = value.toFixed(2);
-    }
-    sheet.addRow({
-      name: g.name || '',
-      platforms: (g.platforms || []).join(', '),
-      price: g.price || '',
-      priceArs,
-      discount: g.discount || '',
-      productUrl: g.productUrl || '',
-    });
-  });
-
-  sheet.autoFilter = {
-    from: 'A1',
-    to: sheet.columns.length === 5 ? 'E1' : 'F1',
-  };
-  sheet.getRow(1).font = { bold: true };
-
-  await workbook.xlsx.writeFile(filePath);
-}
-
-export function exportToCSV(
-  games,
-  filePath = 'juegos-psstore.csv',
-  exchangeRate = null
-) {
-  let header = 'Nombre;Plataformas;Precio (USD);';
-  if (exchangeRate) header += `Precio (ARS) @ ${exchangeRate};`;
-  header += 'Descuento;URL\n';
-
-  const rows = games.map((g) => {
-    const name = (g.name || '').replace(/;/g, ',');
-    const platforms = (g.platforms || []).join(', ').replace(/;/g, ',');
-    const price = g.price || '';
-    const priceUsdNum = parseUsdPrice(g.price);
-    let priceArs = '';
-    if (exchangeRate && priceUsdNum != null) {
-      const value = priceUsdNum * exchangeRate;
-      priceArs = value.toFixed(2);
-    }
-    const discount = g.discount || '';
-    const url = g.productUrl || '';
-
-    if (exchangeRate)
-      return `${name};${platforms};${price};${priceArs};${discount};${url}`;
-    return `${name};${platforms};${price};;${discount};${url}`;
-  });
-
-  const csvContent = header + rows.join('\n');
-  fs.writeFileSync(filePath, csvContent, 'utf8');
 }

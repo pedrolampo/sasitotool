@@ -16,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
     statusBadge.innerHTML = `<span class="status-dot"></span> ${text}`;
   }
 
-  // Escuchar logs
   window.scraperApi.onLogUpdate((message) => {
     const line = document.createElement('div');
     line.className = 'log-line';
@@ -42,7 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setStatus('status-working', 'Procesando...');
     runBtn.disabled = true;
 
-    // Reset consola
     logContent.innerHTML = '';
     logContainer.classList.remove('hidden');
 
