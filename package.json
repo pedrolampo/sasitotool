@@ -1,0 +1,36 @@
+{
+  "name": "scrapper",
+  "version": "1.0.5",
+  "main": "main.mjs",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "type": "module",
+  "license": "MIT",
+  "description": "Scrapper for Sasitogames",
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "playwright": "^1.56.1"
+  },
+  "devDependencies": {
+    "electron": "^39.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.sasitogamespscraper.app",
+    "productName": "Sasitogames Scraper",
+    "directories": {
+      "buildResources": "assets"
+    },
+    "win": {
+      "icon": "assets/icon.ico"
+    },
+    "asarUnpack": [
+      "node_modules/playwright-core/.local-browsers/**"
+    ]
+  }
+}
