@@ -22,10 +22,19 @@ body {
   color: var(--text-primary);
 }
 
+#app {
+  height: 100%;
+}
+
 .app-container {
   display: grid;
   grid-template-columns: 240px 1fr;
   height: 100%;
+  transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-container.sidebar-collapsed {
+  grid-template-columns: 70px 1fr;
 }
 
 .sidebar {
@@ -34,13 +43,45 @@ body {
   display: flex;
   flex-direction: column;
   padding: 1rem;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  height: 32px; /* Fixed height for alignment */
 }
 
 .sidebar-header h2 {
   font-size: 1.2rem;
-  margin-bottom: 2rem;
   color: #fff;
+  margin: 0;
 }
+
+.sidebar.collapsed .sidebar-header {
+  justify-content: center;
+}
+
+.btn-toggle {
+  background: transparent;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+.btn-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
 .menu-list {
   list-style: none;
 }
@@ -49,10 +90,19 @@ body {
   margin-bottom: 0.5rem;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
   color: #d1d5db;
   font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 44px; /* Fixed height */
 }
+.sidebar.collapsed .menu-item {
+  justify-content: center;
+  padding: 0.75rem 0;
+}
+
 .menu-item:hover {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
@@ -70,6 +120,8 @@ body {
   font-size: 0.75rem;
   color: #6b7280;
   text-align: center;
+  opacity: 1;
+  transition: opacity 0.2s;
 }
 
 .content-area {
@@ -79,22 +131,18 @@ body {
 }
 
 .view {
-  display: none;
-  animation: fadeIn 0.3s ease-out;
-}
-.view.active {
-  display: block;
+  /* Vue transition handling handles display/opacity */
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* TRANSITIONS */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
 .welcome-card,

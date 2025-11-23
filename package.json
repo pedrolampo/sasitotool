@@ -1,36 +1,49 @@
 {
-  "name": "scrapper",
+  "name": "sasitotool",
   "version": "1.1.3",
   "main": "src/main/main.js",
   "scripts": {
+    "dev": "concurrently \"vite\" \"wait-on tcp:5173 && cross-env NODE_ENV=development electron .\"",
     "start": "electron .",
-    "build": "electron-builder",
+    "build": "vite build && electron-builder",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "type": "module",
   "license": "MIT",
-  "description": "Scrapper for Sasitogames",
+  "description": "Desktop app for Sasitogames",
   "dependencies": {
     "exceljs": "^4.4.0",
-    "playwright": "^1.56.1"
+    "playwright": "^1.56.1",
+    "vue": "^3.5.24"
   },
   "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.2",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
     "electron": "^39.0.0",
-    "electron-builder": "^24.13.3"
+    "electron-builder": "^24.13.3",
+    "vite": "^7.2.4",
+    "wait-on": "^9.0.3"
   },
   "build": {
-    "appId": "com.sasitogamespscraper.app",
-    "productName": "Sasitogames Scraper",
+    "appId": "com.sasitotool.app",
+    "productName": "SasitoTool",
     "directories": {
       "buildResources": "assets"
     },
     "win": {
-      "icon": "assets/icon.ico"
+      "icon": "assets/logo.ico"
     },
     "asarUnpack": [
       "node_modules/playwright-core/.local-browsers/**"
+    ],
+    "files": [
+      "dist/**/*",
+      "src/main/**/*",
+      "src/services/**/*",
+      "package.json"
     ]
   }
 }

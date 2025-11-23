@@ -7,17 +7,24 @@ export function setupIpcHandlers(mainWindow) {
     'run-scraper',
     async (
       event,
-      { url, pages, fileType, fileNameBase, exchangeRate, config }
+      data // Received as a single object now
     ) => {
+      const {
+        url,
+        pages,
+        format,
+        fileName,
+        dollarRate,
+        headless,
+        timeoutLevel,
+      } = data;
+
       try {
-        const safeType = fileType === 'csv' ? 'csv' : 'xlsx';
+        const safeType = format === 'csv' ? 'csv' : 'xlsx';
         const ext = safeType === 'csv' ? 'csv' : 'xlsx';
         let rate =
-          typeof exchangeRate === 'number' && exchangeRate > 0
-            ? exchangeRate
-            : null;
-        const defaultName =
-          (fileNameBase && fileNameBase.trim()) || 'juegos-psstore';
+          typeof dollarRate === 'number' && dollarRate > 0 ? dollarRate : null;
+        const defaultName = (fileName && fileName.trim()) || 'juegos-psstore';
 
         const result = await dialog.showSaveDialog(mainWindow, {
           title: 'Guardar archivo',
@@ -36,6 +43,12 @@ export function setupIpcHandlers(mainWindow) {
         if (!finalPath.toLowerCase().endsWith(`.${ext}`))
           finalPath += `.${ext}`;
 
+        // Config object for scraper
+        const config = {
+          headless: headless !== false, // Default true
+          timeoutLevel: timeoutLevel || 2,
+        };
+
         const games = await scrapePsOffers(
           url,
           pages,
@@ -53,15 +66,30 @@ export function setupIpcHandlers(mainWindow) {
           await exportToExcel(games, finalPath, rate);
         }
 
-        return {
-          ok: true,
+        const response = {
+          success: true,
           count: games.length,
-          filePath: finalPath,
+          path: finalPath,
           fileType: safeType,
         };
+
+        // Send completion event
+        if (!mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('scrape-complete', response);
+        }
+
+        return response;
       } catch (err) {
         console.error('Error en handler run-scraper:', err);
-        return { ok: false, error: err.message || String(err) };
+        const errorResponse = {
+          success: false,
+          error: err.message || String(err),
+        };
+
+        if (!mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('scrape-complete', errorResponse);
+        }
+        return errorResponse;
       }
     }
   );
