@@ -1,0 +1,79 @@
+<div class="tool-card">
+  <div class="card-header">
+    <div>
+      <h2>Scraper PlayStation</h2>
+      <p class="subtitle">Descarga ofertas y precios</p>
+    </div>
+    <div id="statusBadge" class="status-badge status-ready">
+      <span class="status-dot"></span> Ready
+    </div>
+  </div>
+
+  <div class="form-grid">
+    <div class="col-left">
+      <div class="field">
+        <label>URL de la categoría</label>
+        <div class="input-group">
+          <input
+            id="urlInput"
+            type="text"
+            placeholder="https://store.playstation.com/..."
+          />
+          <button id="saveFavBtn" class="btn-icon" title="Guardar en Favoritos">
+            ⭐
+          </button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Nombre archivo</label>
+        <input id="fileNameInput" type="text" placeholder="juegos-psstore" />
+      </div>
+    </div>
+    <div class="col-right">
+      <div class="field">
+        <label>Páginas</label>
+        <input id="pagesInput" type="number" min="1" value="1" />
+      </div>
+      <div class="field">
+        <label>Formato</label>
+        <select id="fileTypeSelect">
+          <option value="xlsx">Excel (.xlsx)</option>
+          <option value="csv">CSV (.csv)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Dólar (Opcional)</label>
+        <input
+          id="exchangeRateInput"
+          type="number"
+          step="0.01"
+          placeholder="Ej: 950"
+        />
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button id="runBtn" class="btn-primary">Ejecutar Scraper</button>
+  </div>
+
+  <div id="logContainer" class="log-container hidden">
+    <div class="log-header">Logs</div>
+    <div id="logContent" class="log-content"></div>
+  </div>
+
+  <!-- Modal para Nombre de Favorito -->
+  <div id="favModal" class="modal-overlay">
+    <div class="modal">
+      <h3>Guardar Favorito</h3>
+      <div class="field">
+        <label>Nombre</label>
+        <input id="favNameInput" type="text" placeholder="Ej: Ofertas PS5" />
+      </div>
+      <div class="modal-actions">
+        <button id="cancelFavBtn" class="btn-secondary">Cancelar</button>
+        <button id="confirmFavBtn" class="btn-primary">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>

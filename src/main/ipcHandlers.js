@@ -5,7 +5,10 @@ import { exportToExcel, exportToCSV } from '../services/exporter.js';
 export function setupIpcHandlers(mainWindow) {
   ipcMain.handle(
     'run-scraper',
-    async (event, { url, pages, fileType, fileNameBase, exchangeRate }) => {
+    async (
+      event,
+      { url, pages, fileType, fileNameBase, exchangeRate, config }
+    ) => {
       try {
         const safeType = fileType === 'csv' ? 'csv' : 'xlsx';
         const ext = safeType === 'csv' ? 'csv' : 'xlsx';
@@ -33,11 +36,16 @@ export function setupIpcHandlers(mainWindow) {
         if (!finalPath.toLowerCase().endsWith(`.${ext}`))
           finalPath += `.${ext}`;
 
-        const games = await scrapePsOffers(url, pages, (message) => {
-          if (!mainWindow.isDestroyed()) {
-            mainWindow.webContents.send('scraper-log', message);
-          }
-        });
+        const games = await scrapePsOffers(
+          url,
+          pages,
+          (message) => {
+            if (!mainWindow.isDestroyed()) {
+              mainWindow.webContents.send('scraper-log', message);
+            }
+          },
+          config
+        );
 
         if (safeType === 'csv') {
           exportToCSV(games, finalPath, rate);
