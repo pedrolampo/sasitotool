@@ -1,16 +1,12 @@
-// server.mjs
 import { chromium } from 'playwright';
 import fs from 'fs';
 import ExcelJS from 'exceljs';
 
-// Construye la URL de cada página a partir de la base
 function buildPageUrl(baseUrl, pageNumber) {
-  // Si termina en /1, /2, etc., lo reemplazamos
   if (/\/\d+(\/?$)/.test(baseUrl)) {
     return baseUrl.replace(/\/\d+(\/?$)/, `/${pageNumber}$1`);
   }
 
-  // Si no tiene número al final, lo agregamos
   if (baseUrl.endsWith('/')) {
     return baseUrl + pageNumber;
   }
@@ -18,7 +14,6 @@ function buildPageUrl(baseUrl, pageNumber) {
   return baseUrl + '/' + pageNumber;
 }
 
-// Scrapea UNA página
 async function scrapeSinglePage(page, url) {
   console.log('Abriendo página:', url);
 
@@ -32,7 +27,6 @@ async function scrapeSinglePage(page, url) {
     timeout: 60000
   });
 
-  // Espera extra por si todavía está acomodando el grid
   await page.waitForTimeout(3000);
 
   console.log('Extrayendo datos...');
@@ -45,7 +39,6 @@ async function scrapeSinglePage(page, url) {
       const name = link.textContent?.trim();
       if (!name) continue;
 
-      // Evitar duplicados dentro de la misma página
       if (seen.has(name)) continue;
       seen.add(name);
 
@@ -54,17 +47,14 @@ async function scrapeSinglePage(page, url) {
 
       const text = container.innerText || '';
 
-      // Plataformas: PS5, PS4, etc.
       const platformMatches = text.match(/PS5|PS4|PS3|PS Vita|PS VR2|PC/g);
       const platforms = platformMatches
         ? Array.from(new Set(platformMatches))
         : [];
 
-      // Precio principal
       const priceMatch = text.match(/US\$[\d.,]+/);
       const price = priceMatch ? priceMatch[0] : null;
 
-      // Descuento tipo "-50 %"
       const discountMatch = text.match(/-\d+\s?%/);
       const discount = discountMatch ? discountMatch[0] : null;
 
@@ -84,7 +74,6 @@ async function scrapeSinglePage(page, url) {
   return games;
 }
 
-// Scrapea N páginas empezando desde la URL base
 async function scrapePsOffers(baseUrl, pageCount = 1) {
   const browser = await chromium.launch({
     headless: true, // poné false si querés ver el navegador
@@ -103,7 +92,6 @@ async function scrapePsOffers(baseUrl, pageCount = 1) {
     try {
       const games = await scrapeSinglePage(page, pageUrl);
 
-      // Si una página no devuelve nada, asumimos que ya no hay más
       if (!games.length) {
         console.log('Sin resultados en esta página, corto el bucle.');
         break;
@@ -112,14 +100,12 @@ async function scrapePsOffers(baseUrl, pageCount = 1) {
       allGames.push(...games);
     } catch (err) {
       console.error(`Error en página ${p}:`, err.message || err);
-      // Podrías cambiar "break" por "continue" si querés seguir igual
       break;
     }
   }
 
   await browser.close();
 
-  // Deduplicar por nombre + URL por si algo se repite entre páginas
   const deduped = [];
   const seenKeys = new Set();
 
@@ -134,12 +120,10 @@ async function scrapePsOffers(baseUrl, pageCount = 1) {
   return deduped;
 }
 
-// Exportar a CSV (separador ";", ideal para Excel en es-AR)
 function exportToCSV(games, filePath = 'juegos-psstore.csv') {
   const header = 'Nombre;Plataformas;Precio;Descuento;URL\n';
 
   const rows = games.map(g => {
-    // Reemplazar ; por , para no romper el CSV
     const name = (g.name || '').replace(/;/g, ',');
     const platforms = (g.platforms || []).join(', ').replace(/;/g, ',');
     const price = g.price || '';
@@ -154,7 +138,6 @@ function exportToCSV(games, filePath = 'juegos-psstore.csv') {
   console.log(`\nArchivo CSV generado: ${filePath}`);
 }
 
-// Exportar a Excel (.xlsx) con filtros en los encabezados
 async function exportToExcel(games, filePath = 'juegos-psstore.xlsx') {
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet('Ofertas');
@@ -177,30 +160,16 @@ async function exportToExcel(games, filePath = 'juegos-psstore.xlsx') {
     });
   });
 
-  // Activar autofiltro en la fila de encabezados
   sheet.autoFilter = {
     from: 'A1',
     to: 'E1'
   };
 
-  // Opcional: poner en negrita la fila de encabezados
   sheet.getRow(1).font = { bold: true };
 
   await workbook.xlsx.writeFile(filePath);
   console.log(`\nArchivo Excel generado: ${filePath}`);
 }
-
-// ---- ejecución desde consola ----
-// Uso:
-// node server.mjs "<URL>" [cantidadDePaginas] [nombreArchivo]
-//
-// Si el nombre termina en .csv  → genera CSV
-// Si termina en .xlsx          → genera Excel con filtros
-//
-// Ejemplos:
-// node server.mjs "https://store.playstation.com/es-ar/category/3f772501-f6f8-49b7-abac-874a88ca4897/1" 5
-// node server.mjs "https://store.playstation.com/es-ar/category/3f772501-f6f8-49b7-abac-874a88ca4897/1" 5 ofertas.csv
-// node server.mjs "https://store.playstation.com/es-ar/category/3f772501-f6f8-49b7-abac-874a88ca4897/1" 5 ofertas.xlsx
 
 const urlFromArgs = process.argv[2];
 const pagesArg = process.argv[3];
