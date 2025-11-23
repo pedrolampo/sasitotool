@@ -5,6 +5,7 @@ import ScraperView from './views/ScraperView.vue';
 import SettingsView from './views/SettingsView.vue';
 import FavoritesView from './views/FavoritesView.vue';
 import Icon from './components/Icon.vue';
+import logoUrl from './assets/logo.webp';
 
 const currentView = ref('home');
 const version = ref('v1.1.3');
@@ -42,7 +43,10 @@ window.addEventListener('navigate-to', (e) => {
   <div class="app-container" :class="{ 'sidebar-collapsed': isCollapsed }">
     <aside class="sidebar" :class="{ collapsed: isCollapsed }">
       <div class="sidebar-header">
-        <h2 v-show="!isCollapsed">SasitoTool</h2>
+        <div class="brand" v-show="!isCollapsed">
+          <img :src="logoUrl" alt="Logo" class="logo" />
+          <h2>SasitoTool</h2>
+        </div>
         <button
           class="btn-toggle"
           @click="toggleSidebar"
@@ -93,5 +97,128 @@ window.addEventListener('navigate-to', (e) => {
 </template>
 
 <style scoped>
-/* Scoped styles if needed, but we rely on global style.css mostly */
+.app-container {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  height: 100%;
+  transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-container.sidebar-collapsed {
+  grid-template-columns: 70px 1fr;
+}
+
+.sidebar {
+  background: var(--bg-sidebar);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  height: 32px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.sidebar-header h2 {
+  font-size: 1.1rem;
+  color: #fff;
+  margin: 0;
+  font-weight: 600;
+}
+
+.sidebar.collapsed .sidebar-header {
+  justify-content: center;
+}
+
+.btn-toggle {
+  background: transparent;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+.btn-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.menu-list {
+  list-style: none;
+}
+.menu-item {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #d1d5db;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 44px;
+}
+.sidebar.collapsed .menu-item {
+  justify-content: center;
+  padding: 0.75rem 0;
+}
+
+.menu-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+.menu-item.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.version {
+  margin-top: auto;
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-align: center;
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+
+.content-area {
+  background: var(--bg-content);
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+/* TRANSITIONS */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>

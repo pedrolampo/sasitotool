@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import FavoritesView from './FavoritesView.vue';
 import Icon from '../components/Icon.vue';
 
@@ -17,6 +17,9 @@ const favName = ref('');
 
 // Refs for DOM elements if needed, but v-model handles most
 const logContentRef = ref(null);
+
+let cleanupLog = null;
+let cleanupComplete = null;
 
 onMounted(() => {
   // Load settings
@@ -45,7 +48,7 @@ onMounted(() => {
 
   // Listen for logs from main process
   if (window.electronAPI) {
-    window.electronAPI.onLog((data) => {
+    cleanupLog = window.electronAPI.onLog((data) => {
       logs.value.push(data);
       // Auto-scroll
       if (logContentRef.value) {
@@ -55,7 +58,7 @@ onMounted(() => {
       }
     });
 
-    window.electronAPI.onScrapeComplete((result) => {
+    cleanupComplete = window.electronAPI.onScrapeComplete((result) => {
       isRunning.value = false;
       if (result.success) {
         alert(`¡Listo! Archivo guardado en: ${result.path}`);
@@ -64,6 +67,11 @@ onMounted(() => {
       }
     });
   }
+});
+
+onUnmounted(() => {
+  if (cleanupLog) cleanupLog();
+  if (cleanupComplete) cleanupComplete();
 });
 
 function loadFavoriteIntoForm(fav) {
@@ -223,10 +231,12 @@ function saveFavorite() {
       </div>
 
       <div class="actions">
-        <button class="btn-primary" :disabled="isRunning" @click="runScraper">
-          <span v-if="!isRunning" class="flex-center"
-            ><Icon name="rocket" size="18" /> Iniciar Scraper</span
-          >
+        <button
+          class="btn-primary flex-center"
+          :disabled="isRunning"
+          @click="runScraper"
+        >
+          <span v-if="!isRunning" class="flex-center">Iniciar Scraper</span>
           <span v-else class="flex-center"
             ><Icon name="loader" size="18" class="spin" /> Trabajando...</span
           >
@@ -266,7 +276,7 @@ function saveFavorite() {
           <button class="btn-secondary" @click="showModal = false">
             Cancelar
           </button>
-          <button class="btn-primary" @click="saveFavorite">Guardar</button>
+          <button class="flex-center" @click="saveFavorite">Guardar</button>
         </div>
       </div>
     </div>
@@ -320,7 +330,12 @@ function saveFavorite() {
 .flex-center {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+}
+
+.text-center {
+  text-align: center;
 }
 
 .spin {
@@ -334,5 +349,122 @@ function saveFavorite() {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* INPUT GROUPS */
+.input-group {
+  display: flex;
+  gap: 8px;
+}
+.input-group input {
+  flex: 1;
+}
+.input-group .btn-icon {
+  border-color: var(--border);
+  background: white;
+  width: 42px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.input-group .btn-icon:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: white;
+}
+
+/* CONSOLA */
+.log-container {
+  margin-top: 1.5rem;
+  border: 1px solid #9ca3af;
+  background: #000;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+.log-header {
+  background: #e5e7eb;
+  color: #374151;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  border-bottom: 1px solid #9ca3af;
+  font-family: sans-serif;
+}
+.log-content {
+  height: 150px;
+  overflow-y: auto;
+  padding: 10px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.8rem;
+  color: #10b981;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.log-content::-webkit-scrollbar {
+  width: 8px;
+}
+.log-content::-webkit-scrollbar-track {
+  background: #111;
+}
+.log-content::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+.log-line {
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+/* MODAL */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.modal {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  transform: translateY(10px);
+  transition: transform 0.2s;
+}
+.modal-overlay.active .modal {
+  transform: translateY(0);
+}
+.modal h3 {
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 1.5rem;
 }
 </style>
