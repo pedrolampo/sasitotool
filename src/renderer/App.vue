@@ -8,7 +8,7 @@ import Icon from './components/Icon.vue';
 import logoUrl from './assets/logo.webp';
 
 const currentView = ref('home');
-const version = ref('v1.1.3');
+const version = ref(`v${__APP_VERSION__}`);
 const isCollapsed = ref(
   localStorage.getItem('sasito_sidebar_collapsed') === 'true'
 );
@@ -37,10 +37,52 @@ window.addEventListener('navigate-to', (e) => {
     navigate(e.detail.view);
   }
 });
+
+// Auto-update logic
+const updateAvailable = ref(false);
+const updateDownloaded = ref(false);
+const updateError = ref(null);
+
+if (window.electronAPI) {
+  window.electronAPI.onUpdateAvailable(() => {
+    updateAvailable.value = true;
+    updateError.value = null;
+  });
+  window.electronAPI.onUpdateDownloaded(() => {
+    updateAvailable.value = false;
+    updateDownloaded.value = true;
+  });
+  window.electronAPI.onUpdateError((message) => {
+    updateAvailable.value = false;
+    updateError.value = `Error: ${message}`;
+  });
+}
+
+function restartApp() {
+  window.electronAPI.restartApp();
+}
 </script>
 
 <template>
   <div class="app-container" :class="{ 'sidebar-collapsed': isCollapsed }">
+    <!-- Update Notification -->
+    <div v-if="updateAvailable" class="update-bar">
+      <Icon name="loader" size="16" class="spin" />
+      <span>Descargando nueva versión...</span>
+    </div>
+    <div
+      v-if="updateDownloaded"
+      class="update-bar clickable"
+      @click="restartApp"
+    >
+      <Icon name="check" size="16" />
+      <span>¡Actualización lista! Click para reiniciar</span>
+    </div>
+    <div v-if="updateError" class="update-bar error">
+      <Icon name="x" size="16" />
+      <span>{{ updateError }}</span>
+    </div>
+
     <aside class="sidebar" :class="{ collapsed: isCollapsed }">
       <div class="sidebar-header">
         <div class="brand" v-show="!isCollapsed">
@@ -220,5 +262,46 @@ window.addEventListener('navigate-to', (e) => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.update-bar {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #3b82f6;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 9999;
+  font-size: 0.9rem;
+  font-weight: 500;
+  animation: slideIn 0.3s ease-out;
+}
+
+.update-bar.clickable {
+  background: #10b981;
+  cursor: pointer;
+}
+.update-bar.clickable:hover {
+  background: #059669;
+}
+
+.update-bar.error {
+  background: #ef4444;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 </style>

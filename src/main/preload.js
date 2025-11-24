@@ -14,4 +14,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('scrape-complete', listener);
     return () => ipcRenderer.removeListener('scrape-complete', listener);
   },
+  onUpdateAvailable: (callback) => {
+    ipcRenderer.removeAllListeners('update_available');
+    ipcRenderer.on('update_available', () => callback());
+  },
+  onUpdateDownloaded: (callback) => {
+    ipcRenderer.removeAllListeners('update_downloaded');
+    ipcRenderer.on('update_downloaded', () => callback());
+  },
+  onUpdateError: (callback) => {
+    ipcRenderer.removeAllListeners('update_error');
+    ipcRenderer.on('update_error', (_event, message) => callback(message));
+  },
+  restartApp: () => ipcRenderer.send('restart_app'),
 });
