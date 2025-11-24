@@ -34,7 +34,7 @@ async function scrapeSinglePage(page, url, onLog) {
 
     await page.waitForTimeout(1500);
 
-    const games = await page.$$eval('a[href*="/es-ar/product/"]', (links) => {
+    const games = await page.$$eval('a[href*="/product/"]', (links) => {
       const seen = new Set();
       const results = [];
       for (const link of links) {
@@ -130,6 +130,7 @@ export async function scrapePsOffers(
       const randomDelay =
         Math.floor(Math.random() * (maxDelay - minDelay)) + minDelay;
       if (p > 1) {
+        onLog(' '); // Visual separator
         onLog(`⏳ Esperando ${randomDelay}ms para evitar bloqueo...`);
         await page.waitForTimeout(randomDelay);
       }
@@ -155,40 +156,37 @@ export async function scrapePsOffers(
 
         await page.waitForTimeout(1500); // Fixed wait for dynamic content
 
-        const games = await page.$$eval(
-          'a[href*="/es-ar/product/"]',
-          (links) => {
-            const seen = new Set();
-            const results = [];
-            for (const link of links) {
-              const name = link.textContent?.trim();
-              if (!name) continue;
-              if (seen.has(name)) continue;
-              seen.add(name);
-              const container = link.closest('li') || link.parentElement;
-              if (!container) continue;
-              const text = container.innerText || '';
-              const platformMatches = text.match(
-                /PS5|PS4|PS3|PS Vita|PS VR2|PC/g
-              );
-              const platforms = platformMatches
-                ? Array.from(new Set(platformMatches))
-                : [];
-              const priceMatch = text.match(/US\$[\d.,]+/);
-              const price = priceMatch ? priceMatch[0] : null;
-              const discountMatch = text.match(/-\d+\s?%/);
-              const discount = discountMatch ? discountMatch[0] : null;
-              results.push({
-                name,
-                platforms,
-                price,
-                discount,
-                productUrl: link.href,
-              });
-            }
-            return results;
+        const games = await page.$$eval('a[href*="/product/"]', (links) => {
+          const seen = new Set();
+          const results = [];
+          for (const link of links) {
+            const name = link.textContent?.trim();
+            if (!name) continue;
+            if (seen.has(name)) continue;
+            seen.add(name);
+            const container = link.closest('li') || link.parentElement;
+            if (!container) continue;
+            const text = container.innerText || '';
+            const platformMatches = text.match(
+              /PS5|PS4|PS3|PS Vita|PS VR2|PC/g
+            );
+            const platforms = platformMatches
+              ? Array.from(new Set(platformMatches))
+              : [];
+            const priceMatch = text.match(/US\$[\d.,]+/);
+            const price = priceMatch ? priceMatch[0] : null;
+            const discountMatch = text.match(/-\d+\s?%/);
+            const discount = discountMatch ? discountMatch[0] : null;
+            results.push({
+              name,
+              platforms,
+              price,
+              discount,
+              productUrl: link.href,
+            });
           }
-        );
+          return results;
+        });
 
         onLog(`   -> Encontrados: ${games.length} items`);
 

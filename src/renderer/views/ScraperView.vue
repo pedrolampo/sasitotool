@@ -248,7 +248,7 @@ function saveFavorite() {
         <div class="log-header">Logs</div>
         <div ref="logContentRef" class="log-content">
           <div v-for="(log, index) in logs" :key="index" class="log-line">
-            {{ log }}
+            <span class="log-prefix">>></span> {{ log }}
           </div>
         </div>
       </div>
@@ -422,6 +422,12 @@ function saveFavorite() {
 .log-line {
   word-break: break-all;
   line-height: 1.4;
+}
+.log-prefix {
+  margin-right: 8px;
+  color: #34d399; /* Slightly lighter green for the prompt */
+  font-weight: bold;
+  user-select: none;
 }
 
 /* MODAL */
