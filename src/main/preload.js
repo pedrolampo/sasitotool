@@ -56,4 +56,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
       callback(reason)
     );
   },
+
+  exportNotes: (notes) => ipcRenderer.invoke('notes:export', notes),
 });

@@ -132,4 +132,27 @@ export function setupIpcHandlers(mainWindow) {
       return { success: false, error: error.message };
     }
   });
+
+  ipcMain.handle('notes:export', async (event, notes) => {
+    try {
+      const result = await dialog.showSaveDialog(mainWindow, {
+        title: 'Exportar Notas',
+        defaultPath: 'notas_telegram.xlsx',
+        filters: [{ name: 'Excel', extensions: ['xlsx'] }],
+      });
+
+      if (result.canceled || !result.filePath) {
+        return { success: false, error: 'Guardado cancelado' };
+      }
+
+      // Dynamic import to avoid circular dependencies if any, though here it's fine
+      const { exportNotesToExcel } = await import('../services/exporter.js');
+      await exportNotesToExcel(notes, result.filePath);
+
+      return { success: true, path: result.filePath };
+    } catch (error) {
+      console.error('Error exporting notes:', error);
+      return { success: false, error: error.message };
+    }
+  });
 }

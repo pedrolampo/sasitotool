@@ -27,13 +27,41 @@ function formatDate(date) {
     timeStyle: 'short',
   }).format(date);
 }
+
+async function exportNotes() {
+  if (notes.value.length === 0) return;
+
+  try {
+    // Clone notes to avoid proxy issues
+    const notesData = JSON.parse(JSON.stringify(notes.value));
+    const res = await window.electronAPI.exportNotes(notesData);
+
+    if (res.success) {
+      alert(`Notas exportadas correctamente en:\n${res.path}`);
+    } else {
+      if (res.error !== 'Guardado cancelado') {
+        alert(`Error: ${res.error}`);
+      }
+    }
+  } catch (err) {
+    console.error('Error exporting notes:', err);
+    alert('Error al exportar las notas.');
+  }
+}
 </script>
 
 <template>
   <div class="tool-card">
     <div class="card-header">
       <h2>Notas y Mensajes</h2>
-      <p class="subtitle">Mensajes recibidos desde el Bot de Telegram</p>
+      <button
+        class="btn-primary export-btn"
+        @click="exportNotes"
+        :disabled="loading || notes.length === 0"
+      >
+        <Icon name="file" size="16" />
+        Exportar a Excel
+      </button>
     </div>
 
     <div v-if="loading" class="loading-state">
@@ -149,5 +177,14 @@ function formatDate(date) {
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.export-btn {
+  width: auto;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 </style>

@@ -101,3 +101,38 @@ export function exportToCSV(games, filePath, exchangeRate = null) {
   const csvContent = header + rows.join('\n');
   fs.writeFileSync(filePath, csvContent, 'utf8');
 }
+
+export async function exportNotesToExcel(notes, filePath) {
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet('Notas');
+
+  sheet.columns = [
+    { header: 'Fecha', key: 'date', width: 20 },
+    { header: 'Tipo', key: 'type', width: 15 },
+    { header: 'Contenido', key: 'content', width: 80 },
+  ];
+
+  notes.forEach((note) => {
+    let dateStr = '';
+    if (note.createdAt) {
+      try {
+        // Handle Firestore Timestamp or Date string
+        const date = note.createdAt.toDate
+          ? note.createdAt.toDate()
+          : new Date(note.createdAt);
+        dateStr = date.toLocaleString('es-AR');
+      } catch (e) {
+        dateStr = String(note.createdAt);
+      }
+    }
+
+    sheet.addRow({
+      date: dateStr,
+      type: note.type === 'audio_transcript' ? 'Audio' : 'Texto',
+      content: note.content || '',
+    });
+  });
+
+  sheet.getRow(1).font = { bold: true };
+  await workbook.xlsx.writeFile(filePath);
+}
