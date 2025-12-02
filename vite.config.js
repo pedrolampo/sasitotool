@@ -7,6 +7,7 @@ export default defineConfig({
   plugins: [vue()],
   base: './', // Important for Electron to load assets correctly
   root: 'src/renderer', // Set root to renderer folder
+  envDir: process.cwd(), // Load .env from project root
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },

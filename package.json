@@ -1,6 +1,6 @@
 {
   "name": "sasitotool",
-  "version": "1.2.1",
+  "version": "1.2.4",
   "main": "src/main/main.js",
   "scripts": {
     "dev": "concurrently \"vite\" \"wait-on tcp:5173 && cross-env NODE_ENV=development electron .\"",
@@ -16,6 +16,7 @@
   "dependencies": {
     "electron-updater": "^6.6.2",
     "exceljs": "^4.4.0",
+    "firebase": "^12.6.0",
     "playwright": "^1.56.1",
     "qrcode": "^1.5.4",
     "vue": "^3.5.24",

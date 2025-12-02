@@ -247,7 +247,7 @@ function saveFavorite() {
 
     <!-- Tab Content: Favorites -->
     <div v-else class="tab-content">
-      <FavoritesView @run-favorite="loadFavoriteIntoForm" />
+      <FavoritesView @run-favorite="loadFavoriteIntoForm" :embedded="true" />
     </div>
 
     <!-- Modal -->

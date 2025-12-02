@@ -2,6 +2,13 @@
 import { ref, onMounted } from 'vue';
 import Icon from '../components/Icon.vue';
 
+const props = defineProps({
+  embedded: {
+    type: Boolean,
+    default: false,
+  },
+});
+
 const emit = defineEmits(['run-favorite']);
 const favorites = ref([]);
 
@@ -34,47 +41,54 @@ function runFavorite(fav) {
 </script>
 
 <template>
-  <div class="favorites-grid">
-    <div v-if="favorites.length === 0" class="empty-state">
-      <div class="empty-icon">
-        <Icon name="favorites" size="48" color="#d1d5db" />
-      </div>
-      <h3>No tenés favoritos guardados</h3>
-      <p>Guardá tus búsquedas frecuentes desde la pestaña "Nuevo Scrapeo".</p>
+  <div :class="{ 'tool-card': !embedded }">
+    <div class="card-header" v-if="!embedded">
+      <h2>Favoritos Guardados</h2>
+      <p class="subtitle">Tus configuraciones de scraping guardadas</p>
     </div>
 
-    <div v-for="(fav, index) in favorites" :key="index" class="fav-card">
-      <div class="fav-header">
-        <div class="fav-title-group">
-          <span class="fav-icon"><Icon name="favorites" size="18" /></span>
-          <h3 :title="fav.name">{{ fav.name }}</h3>
+    <div class="favorites-grid">
+      <div v-if="favorites.length === 0" class="empty-state">
+        <div class="empty-icon">
+          <Icon name="favorites" size="48" color="#d1d5db" />
         </div>
-        <button
-          class="btn-icon-small"
-          title="Eliminar"
-          @click="deleteFavorite(index)"
-        >
-          <Icon name="trash" size="16" />
-        </button>
+        <h3>No tenés favoritos guardados</h3>
+        <p>Guardá tus búsquedas frecuentes desde la pestaña "Nuevo Scrapeo".</p>
       </div>
 
-      <div class="fav-body">
-        <div class="fav-info">
-          <span class="label">URL:</span>
-          <span class="value url" :title="fav.url">{{ fav.url }}</span>
-        </div>
-        <div class="fav-info">
-          <span class="label">Archivo:</span>
-          <span class="value file"
-            ><Icon name="file" size="12" /> {{ fav.fileName }}</span
+      <div v-for="(fav, index) in favorites" :key="index" class="fav-card">
+        <div class="fav-header">
+          <div class="fav-title-group">
+            <span class="fav-icon"><Icon name="favorites" size="18" /></span>
+            <h3 :title="fav.name">{{ fav.name }}</h3>
+          </div>
+          <button
+            class="btn-icon-small"
+            title="Eliminar"
+            @click="deleteFavorite(index)"
           >
+            <Icon name="trash" size="16" />
+          </button>
         </div>
-      </div>
 
-      <div class="fav-actions">
-        <button class="btn-run" @click="runFavorite(fav)">
-          <Icon name="play" size="16" /> Cargar y Scrapear
-        </button>
+        <div class="fav-body">
+          <div class="fav-info">
+            <span class="label">URL:</span>
+            <span class="value url" :title="fav.url">{{ fav.url }}</span>
+          </div>
+          <div class="fav-info">
+            <span class="label">Archivo:</span>
+            <span class="value file"
+              ><Icon name="file" size="12" /> {{ fav.fileName }}</span
+            >
+          </div>
+        </div>
+
+        <div class="fav-actions">
+          <button class="btn-run" @click="runFavorite(fav)">
+            <Icon name="play" size="16" /> Cargar y Scrapear
+          </button>
+        </div>
       </div>
     </div>
   </div>

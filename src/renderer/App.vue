@@ -5,6 +5,7 @@ import ScraperView from './views/ScraperView.vue';
 import SettingsView from './views/SettingsView.vue';
 import FavoritesView from './views/FavoritesView.vue';
 import WhatsappView from './views/WhatsappView.vue';
+import NotesView from './views/NotesView.vue';
 import Icon from './components/Icon.vue';
 import logoUrl from './assets/logo.webp';
 
@@ -20,6 +21,7 @@ const views = {
   settings: SettingsView,
   favorites: FavoritesView,
   whatsapp: WhatsappView,
+  notes: NotesView,
 };
 
 const currentComponent = computed(() => views[currentView.value]);
@@ -124,6 +126,16 @@ function restartApp() {
         >
           <Icon name="whatsapp" size="20" />
           <span v-show="!isCollapsed">WhatsApp</span>
+        </li>
+
+        <li
+          class="menu-item"
+          :class="{ active: currentView === 'notes' }"
+          @click="navigate('notes')"
+          :title="isCollapsed ? 'Notas' : ''"
+        >
+          <Icon name="file-text" size="20" />
+          <span v-show="!isCollapsed">Notas</span>
         </li>
 
         <li

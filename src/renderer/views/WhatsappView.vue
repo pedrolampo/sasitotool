@@ -144,9 +144,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="whatsapp-view">
-    <div class="header">
-      <h1>WhatsApp Contact Saver</h1>
+  <div class="tool-card">
+    <div class="card-header">
+      <h2>WhatsApp Contact Saver</h2>
       <p class="subtitle">
         Escanea tus chats y guarda los números no agendados.
       </p>
@@ -263,22 +263,6 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.whatsapp-view {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.header h1 {
-  font-size: 1.8rem;
-  margin-bottom: 0.5rem;
-}
-
-.subtitle {
-  color: var(--text-light);
-}
-
 .main-content {
   display: grid;
   grid-template-columns: 350px 1fr;
@@ -288,13 +272,14 @@ onUnmounted(() => {
 }
 
 .panel {
-  background: var(--bg-card);
-  border-radius: 12px;
-  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  border: 1px solid var(--border-color);
+}
+
+.panel.controls {
+  padding-right: 1.5rem;
+  border-right: 1px solid var(--border);
 }
 
 .status-card {
