@@ -3,26 +3,24 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import FavoritesView from './FavoritesView.vue';
 import Icon from '../components/Icon.vue';
 
-const activeTab = ref('new'); // 'new' | 'favorites'
+const activeTab = ref('new');
 
 const url = ref('');
 const fileName = ref('');
 const pages = ref(1);
 const format = ref('xlsx');
-const dollarRate = ref('1135'); // Default value
+const dollarRate = ref('1135');
 const isRunning = ref(false);
 const logs = ref([]);
 const showModal = ref(false);
 const favName = ref('');
 
-// Refs for DOM elements if needed, but v-model handles most
 const logContentRef = ref(null);
 
 let cleanupLog = null;
 let cleanupComplete = null;
 
 onMounted(() => {
-  // Load settings
   const savedSettings = localStorage.getItem('sasito_settings');
   if (savedSettings) {
     try {
@@ -34,7 +32,6 @@ onMounted(() => {
     }
   }
 
-  // Check for pending run
   const pendingRun = localStorage.getItem('sasito_pending_run');
   if (pendingRun) {
     try {
@@ -46,11 +43,9 @@ onMounted(() => {
     }
   }
 
-  // Listen for logs from main process
   if (window.electronAPI) {
     cleanupLog = window.electronAPI.onLog((data) => {
       logs.value.push(data);
-      // Auto-scroll
       if (logContentRef.value) {
         setTimeout(() => {
           logContentRef.value.scrollTop = logContentRef.value.scrollHeight;
@@ -77,7 +72,7 @@ onUnmounted(() => {
 function loadFavoriteIntoForm(fav) {
   url.value = fav.url || '';
   fileName.value = fav.fileName || '';
-  activeTab.value = 'new'; // Switch to form tab
+  activeTab.value = 'new';
 }
 
 function runScraper() {
@@ -91,9 +86,8 @@ function runScraper() {
   }
 
   isRunning.value = true;
-  logs.value = []; // Clear logs
+  logs.value = [];
 
-  // Load current settings for run config
   const savedSettings = localStorage.getItem('sasito_settings');
   let config = {};
   if (savedSettings) {
@@ -107,7 +101,7 @@ function runScraper() {
       pages: pages.value,
       format: format.value,
       dollarRate: parseFloat(dollarRate.value) || 0,
-      headless: config.headless !== false, // Default true
+      headless: config.headless !== false,
       timeoutLevel: parseInt(config.timeoutLevel || '2', 10),
     });
   } else {
@@ -143,9 +137,6 @@ function saveFavorite() {
 
   showModal.value = false;
   alert('¡Favorito guardado!');
-
-  // Force update of favorites view if needed (via event or key)
-  // For now, FavoritesView reads from localStorage on mount/update
 }
 </script>
 

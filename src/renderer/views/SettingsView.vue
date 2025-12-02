@@ -5,7 +5,7 @@ import Icon from '../components/Icon.vue';
 const dollarType = ref('blue');
 const dollarValue = ref('Cargando...');
 const defaultFormat = ref('xlsx');
-const headless = ref(true); // Default true (headless mode)
+const headless = ref(true);
 const timeoutLevel = ref(2);
 const timeoutDesc = ref('Normal: Esperas estándar (Recomendado).');
 
@@ -55,7 +55,7 @@ function saveSettings() {
     dollarType: dollarType.value,
     dollarValue: dollarValue.value,
     defaultFormat: defaultFormat.value,
-    headless: headless.value, // True = Headless (No Browser)
+    headless: headless.value,
     timeoutLevel: timeoutLevel.value,
   };
   console.log('Saving settings:', settings);
@@ -71,14 +71,6 @@ function loadSettings() {
       if (settings.dollarType) dollarType.value = settings.dollarType;
       if (settings.dollarValue) dollarValue.value = settings.dollarValue;
       if (settings.defaultFormat) defaultFormat.value = settings.defaultFormat;
-
-      // Headless logic:
-      // settings.headless = true (default) -> Toggle Unchecked (Show Browser = Off)
-      // settings.headless = false -> Toggle Checked (Show Browser = On)
-      // Wait, let's align with the UI toggle.
-      // UI Toggle: "Modo Ver Navegador"
-      // Checked = Show Browser = headless: false
-      // Unchecked = Hide Browser = headless: true
 
       if (settings.headless !== undefined) {
         headless.value = settings.headless;
@@ -136,7 +128,6 @@ function loadSettings() {
         </div>
       </div>
 
-      <!-- Defaults Section -->
       <div class="settings-section">
         <h3>Preferencias de Exportación</h3>
         <div class="field">
@@ -148,7 +139,6 @@ function loadSettings() {
         </div>
       </div>
 
-      <!-- Scraper Config Section -->
       <div class="settings-section">
         <h3>Opciones del Scraper</h3>
 
@@ -170,11 +160,6 @@ function loadSettings() {
             </p>
           </div>
           <label class="toggle-switch">
-            <!-- 
-              v-model with true-value/false-value 
-              Checked (true) = Show Browser = headless: false
-              Unchecked (false) = Hide Browser = headless: true
-            -->
             <input
               type="checkbox"
               v-model="headless"

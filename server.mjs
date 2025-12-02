@@ -3,15 +3,28 @@ import fs from 'fs';
 import ExcelJS from 'exceljs';
 
 function buildPageUrl(baseUrl, pageNumber) {
-  if (/\/\d+(\/?$)/.test(baseUrl)) {
-    return baseUrl.replace(/\/\d+(\/?$)/, `/${pageNumber}$1`);
-  }
+  try {
+    const urlObj = new URL(baseUrl);
+    const pathSegments = urlObj.pathname.split('/').filter(Boolean);
 
-  if (baseUrl.endsWith('/')) {
-    return baseUrl + pageNumber;
-  }
+    const lastSegment = pathSegments[pathSegments.length - 1];
+    if (/^\d+$/.test(lastSegment)) {
+      pathSegments[pathSegments.length - 1] = pageNumber.toString();
+    } else {
+      pathSegments.push(pageNumber.toString());
+    }
 
-  return baseUrl + '/' + pageNumber;
+    urlObj.pathname = '/' + pathSegments.join('/');
+    return urlObj.toString();
+  } catch (e) {
+    if (/\/\d+(\/?$)/.test(baseUrl)) {
+      return baseUrl.replace(/\/\d+(\/?$)/, `/${pageNumber}$1`);
+    }
+    if (baseUrl.endsWith('/')) {
+      return baseUrl + pageNumber;
+    }
+    return baseUrl + '/' + pageNumber;
+  }
 }
 
 async function scrapeSinglePage(page, url) {
@@ -19,19 +32,19 @@ async function scrapeSinglePage(page, url) {
 
   await page.goto(url, {
     waitUntil: 'domcontentloaded',
-    timeout: 90000
+    timeout: 90000,
   });
 
   console.log('Esperando a que se carguen los productos...');
   await page.waitForSelector('a[href*="/es-ar/product/"]', {
-    timeout: 60000
+    timeout: 60000,
   });
 
   await page.waitForTimeout(3000);
 
   console.log('Extrayendo datos...');
 
-  const games = await page.$$eval('a[href*="/es-ar/product/"]', links => {
+  const games = await page.$$eval('a[href*="/es-ar/product/"]', (links) => {
     const seen = new Set();
     const results = [];
 
@@ -63,7 +76,7 @@ async function scrapeSinglePage(page, url) {
         platforms,
         price,
         discount,
-        productUrl: link.href
+        productUrl: link.href,
       });
     }
 
@@ -76,8 +89,8 @@ async function scrapeSinglePage(page, url) {
 
 async function scrapePsOffers(baseUrl, pageCount = 1) {
   const browser = await chromium.launch({
-    headless: true, // poné false si querés ver el navegador
-    args: ['--disable-blink-features=AutomationControlled']
+    headless: true,
+    args: ['--disable-blink-features=AutomationControlled'],
   });
 
   const page = await browser.newPage();
@@ -123,7 +136,7 @@ async function scrapePsOffers(baseUrl, pageCount = 1) {
 function exportToCSV(games, filePath = 'juegos-psstore.csv') {
   const header = 'Nombre;Plataformas;Precio;Descuento;URL\n';
 
-  const rows = games.map(g => {
+  const rows = games.map((g) => {
     const name = (g.name || '').replace(/;/g, ',');
     const platforms = (g.platforms || []).join(', ').replace(/;/g, ',');
     const price = g.price || '';
@@ -147,22 +160,22 @@ async function exportToExcel(games, filePath = 'juegos-psstore.xlsx') {
     { header: 'Plataformas', key: 'platforms', width: 20 },
     { header: 'Precio', key: 'price', width: 15 },
     { header: 'Descuento', key: 'discount', width: 12 },
-    { header: 'URL', key: 'productUrl', width: 60 }
+    { header: 'URL', key: 'productUrl', width: 60 },
   ];
 
-  games.forEach(g => {
+  games.forEach((g) => {
     sheet.addRow({
       name: g.name || '',
       platforms: (g.platforms || []).join(', '),
       price: g.price || '',
       discount: g.discount || '',
-      productUrl: g.productUrl || ''
+      productUrl: g.productUrl || '',
     });
   });
 
   sheet.autoFilter = {
     from: 'A1',
-    to: 'E1'
+    to: 'E1',
   };
 
   sheet.getRow(1).font = { bold: true };
@@ -176,7 +189,9 @@ const pagesArg = process.argv[3];
 const fileArg = process.argv[4];
 
 if (!urlFromArgs) {
-  console.error('Uso: node server.mjs <URL> [cantidadDePaginas] [nombreArchivo]');
+  console.error(
+    'Uso: node server.mjs <URL> [cantidadDePaginas] [nombreArchivo]'
+  );
   process.exit(1);
 }
 
@@ -185,14 +200,14 @@ const fileName = fileArg || 'juegos-psstore.csv';
 const isXlsx = fileName.toLowerCase().endsWith('.xlsx');
 
 scrapePsOffers(urlFromArgs, pageCount)
-  .then(async games => {
+  .then(async (games) => {
     if (isXlsx) {
       await exportToExcel(games, fileName);
     } else {
       exportToCSV(games, fileName);
     }
   })
-  .catch(err => {
+  .catch((err) => {
     console.error('Error al scrapear:', err);
     process.exit(1);
   });

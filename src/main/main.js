@@ -10,7 +10,6 @@ const __dirname = path.dirname(__filename);
 
 let mainWindow;
 
-// Disable security warnings in dev (caused by 'unsafe-eval' needed for Vite)
 if (process.env.NODE_ENV === 'development') {
   process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
 }
@@ -25,7 +24,6 @@ async function createWindow() {
     },
   });
 
-  // Dev vs Prod
   const isDev = process.env.NODE_ENV === 'development';
 
   if (isDev) {
@@ -38,8 +36,6 @@ async function createWindow() {
 
 app.whenReady().then(() => {
   createWindow();
-  // Pasamos la instancia de mainWindow a los handlers para usar dialogs
-  // Usamos setImmediate para asegurar que mainWindow esté definida si fuera síncrono
   setTimeout(() => {
     setupIpcHandlers(mainWindow);
     setupAutoUpdater();

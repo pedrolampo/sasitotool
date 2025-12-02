@@ -4,6 +4,7 @@ import HomeView from './views/HomeView.vue';
 import ScraperView from './views/ScraperView.vue';
 import SettingsView from './views/SettingsView.vue';
 import FavoritesView from './views/FavoritesView.vue';
+import WhatsappView from './views/WhatsappView.vue';
 import Icon from './components/Icon.vue';
 import logoUrl from './assets/logo.webp';
 
@@ -18,6 +19,7 @@ const views = {
   scraper: ScraperView,
   settings: SettingsView,
   favorites: FavoritesView,
+  whatsapp: WhatsappView,
 };
 
 const currentComponent = computed(() => views[currentView.value]);
@@ -31,14 +33,12 @@ function toggleSidebar() {
   localStorage.setItem('sasito_sidebar_collapsed', isCollapsed.value);
 }
 
-// Listen for navigation events from children (e.g. Favorites -> Scraper)
 window.addEventListener('navigate-to', (e) => {
   if (e.detail && e.detail.view) {
     navigate(e.detail.view);
   }
 });
 
-// Auto-update logic
 const updateAvailable = ref(false);
 const updateDownloaded = ref(false);
 const updateError = ref(null);
@@ -65,7 +65,6 @@ function restartApp() {
 
 <template>
   <div class="app-container" :class="{ 'sidebar-collapsed': isCollapsed }">
-    <!-- Update Notification -->
     <div v-if="updateAvailable" class="update-bar">
       <Icon name="loader" size="16" class="spin" />
       <span>Descargando nueva versión...</span>
@@ -115,6 +114,16 @@ function restartApp() {
         >
           <Icon name="scraper" size="20" />
           <span v-show="!isCollapsed">Scraper</span>
+        </li>
+
+        <li
+          class="menu-item"
+          :class="{ active: currentView === 'whatsapp' }"
+          @click="navigate('whatsapp')"
+          :title="isCollapsed ? 'WhatsApp' : ''"
+        >
+          <Icon name="whatsapp" size="20" />
+          <span v-show="!isCollapsed">WhatsApp</span>
         </li>
 
         <li
