@@ -63,6 +63,19 @@ if (window.electronAPI) {
 function restartApp() {
   window.electronAPI.restartApp();
 }
+
+// Initialize Theme
+const savedSettings = localStorage.getItem('sasito_settings');
+if (savedSettings) {
+  try {
+    const settings = JSON.parse(savedSettings);
+    if (settings.theme) {
+      document.documentElement.setAttribute('data-theme', settings.theme);
+    }
+  } catch (e) {
+    console.error('Error loading theme:', e);
+  }
+}
 </script>
 
 <template>
@@ -162,13 +175,14 @@ function restartApp() {
 <style scoped>
 .app-container {
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: 260px 1fr;
   height: 100%;
   transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--bg-content);
 }
 
 .app-container.sidebar-collapsed {
-  grid-template-columns: 70px 1fr;
+  grid-template-columns: 80px 1fr;
 }
 
 .sidebar {
@@ -176,36 +190,41 @@ function restartApp() {
   color: white;
   display: flex;
   flex-direction: column;
-  padding: 1rem;
+  padding: 1.5rem 1rem;
   overflow: hidden;
   white-space: nowrap;
+  border-right: 1px solid var(--border);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.05);
+  z-index: 10;
 }
 
 .sidebar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 2rem;
-  height: 32px;
+  margin-bottom: 3rem;
+  height: 40px;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .logo {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
 }
 
 .sidebar-header h2 {
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   color: #fff;
   margin: 0;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .sidebar.collapsed .sidebar-header {
@@ -213,94 +232,111 @@ function restartApp() {
 }
 
 .btn-toggle {
-  background: transparent;
-  border: none;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--text-light);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
-  border-radius: 6px;
+  padding: 6px;
+  border-radius: 8px;
   transition: all 0.2s;
 }
 .btn-toggle:hover {
   background: rgba(255, 255, 255, 0.1);
   color: white;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .menu-list {
   list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 .menu-item {
-  padding: 0.75rem 1rem;
-  margin-bottom: 0.5rem;
-  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s;
-  color: #d1d5db;
+  transition: all 0.2s ease;
+  color: #94a3b8;
   font-size: 0.95rem;
+  font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 12px;
-  height: 44px;
+  gap: 14px;
+  height: 48px;
 }
 .sidebar.collapsed .menu-item {
   justify-content: center;
-  padding: 0.75rem 0;
+  padding: 0.85rem 0;
 }
 
 .menu-item:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
   color: #fff;
+  transform: translateX(4px);
 }
+.sidebar.collapsed .menu-item:hover {
+  transform: none;
+}
+
 .menu-item.active {
   background: var(--accent);
   color: #fff;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+.menu-item.active:hover {
+  transform: none;
 }
 
 .version {
   margin-top: auto;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: #475569;
   text-align: center;
   opacity: 1;
   transition: opacity 0.2s;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .content-area {
   background: var(--bg-content);
-  padding: 2rem;
+  padding: 2.5rem;
   overflow-y: auto;
 }
 
 /* TRANSITIONS */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+  transform: translateY(10px);
 }
 
 .update-bar {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: 24px;
+  right: 24px;
   background: #3b82f6;
   color: white;
-  padding: 10px 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  padding: 12px 24px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   z-index: 9999;
-  font-size: 0.9rem;
-  font-weight: 500;
-  animation: slideIn 0.3s ease-out;
+  font-size: 0.95rem;
+  font-weight: 600;
+  animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .update-bar.clickable {
@@ -309,6 +345,7 @@ function restartApp() {
 }
 .update-bar.clickable:hover {
   background: #059669;
+  transform: translateY(-2px);
 }
 
 .update-bar.error {
