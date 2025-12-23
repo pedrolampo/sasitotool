@@ -10,19 +10,20 @@ export function setupIpcHandlers(mainWindow) {
       pages,
       format,
       fileName,
-      dollarRate,
+      exchangeRate,
       headless,
       timeoutLevel,
       includeDates,
       originCurrency,
-      rateToUsd,
     } = data;
 
     try {
       const safeType = format === 'csv' ? 'csv' : 'xlsx';
       const ext = safeType === 'csv' ? 'csv' : 'xlsx';
       let rate =
-        typeof dollarRate === 'number' && dollarRate > 0 ? dollarRate : null;
+        typeof exchangeRate === 'number' && exchangeRate > 0
+          ? exchangeRate
+          : null;
       const defaultName = (fileName && fileName.trim()) || 'juegos-psstore';
 
       const result = await dialog.showSaveDialog(mainWindow, {
@@ -46,7 +47,8 @@ export function setupIpcHandlers(mainWindow) {
         timeoutLevel: timeoutLevel || 2,
         includeDates: includeDates === true,
         originCurrency: originCurrency || 'USD',
-        rateToUsd: rateToUsd || 0,
+        // We pass the single rate. usage depends on originCurrency in logic
+        exchangeRate: exchangeRate || 0,
       };
 
       const games = await scrapePsOffers(

@@ -16,7 +16,25 @@ const showModal = ref(false);
 const favName = ref('');
 const includeDiscountDate = ref(false);
 const originCurrency = ref('USD');
-const rateToUsd = ref(0.04);
+
+// Watch for currency changes to update default rate
+import { watch } from 'vue';
+watch(originCurrency, (newVal) => {
+  if (newVal === 'TRY') {
+    dollarRate.value = 0.04;
+  } else if (newVal === 'EUR') {
+    dollarRate.value = 1.05;
+  } else {
+    // USD or ARS -> Restore saved or default ARS rate
+    const saved = localStorage.getItem('sasito_settings');
+    if (saved) {
+      const s = JSON.parse(saved);
+      dollarRate.value = s.dollarValue || 1465;
+    } else {
+      dollarRate.value = 1465;
+    }
+  }
+});
 
 const logContentRef = ref(null);
 
@@ -107,8 +125,10 @@ function runScraper() {
       headless: config.headless !== false,
       timeoutLevel: parseInt(config.timeoutLevel || '2', 10),
       includeDates: includeDiscountDate.value,
+      timeoutLevel: parseInt(config.timeoutLevel || '2', 10),
+      includeDates: includeDiscountDate.value,
       originCurrency: originCurrency.value,
-      rateToUsd: parseFloat(rateToUsd.value) || 0,
+      exchangeRate: parseFloat(dollarRate.value) || 0,
     });
   } else {
     console.warn('Electron API not available');
@@ -210,16 +230,6 @@ function saveFavorite() {
               <option value="TRY">Liras Turcas (TRY)</option>
             </select>
           </div>
-
-          <div class="field" v-if="['EUR', 'TRY'].includes(originCurrency)">
-            <label>Cotización a USD (Ej: 0.04)</label>
-            <input
-              v-model="rateToUsd"
-              type="number"
-              step="0.0001"
-              placeholder="Ej: 0.04"
-            />
-          </div>
         </div>
 
         <div class="col-right">
@@ -241,14 +251,25 @@ function saveFavorite() {
             </select>
           </div>
           <div class="field">
-            <label>Cotización Dólar (ARS únicamente)</label>
-            <input v-model="dollarRate" type="number" placeholder="Ej: 1135" />
+            <label>{{
+              ['USD', 'ARS'].includes(originCurrency)
+                ? 'Cotización Dólar (ARS)'
+                : `Cotización ${originCurrency} a USD (Ej: ${
+                    originCurrency === 'TRY' ? '0.04' : '1.05'
+                  })`
+            }}</label>
+            <input
+              v-model="dollarRate"
+              type="number"
+              step="0.0001"
+              placeholder="Ej: 1465"
+            />
           </div>
 
           <div class="field checkbox-field">
             <label class="checkbox-label">
               <input type="checkbox" v-model="includeDiscountDate" />
-              ¿Incluir fecha de fin descuento? (Más lento)
+              ¿Incluir fecha de fin descuento? (Mucho más lento)
             </label>
           </div>
         </div>

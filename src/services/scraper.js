@@ -325,7 +325,7 @@ export async function scrapePsOffers(
     seenKeys.add(key);
     // Attach config info to each game for the exporter to use
     g.originCurrency = config.originCurrency || 'USD';
-    g.rateToUsd = config.rateToUsd || 0;
+    g.exchangeRate = config.exchangeRate || 0;
     deduped.push(g);
   }
 
