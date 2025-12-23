@@ -5,8 +5,16 @@ import * as whatsappService from '../services/whatsappService.js';
 
 export function setupIpcHandlers(mainWindow) {
   ipcMain.handle('run-scraper', async (event, data) => {
-    const { url, pages, format, fileName, dollarRate, headless, timeoutLevel } =
-      data;
+    const {
+      url,
+      pages,
+      format,
+      fileName,
+      dollarRate,
+      headless,
+      timeoutLevel,
+      includeDates,
+    } = data;
 
     try {
       const safeType = format === 'csv' ? 'csv' : 'xlsx';
@@ -34,6 +42,7 @@ export function setupIpcHandlers(mainWindow) {
       const config = {
         headless: headless !== false,
         timeoutLevel: timeoutLevel || 2,
+        includeDates: includeDates === true,
       };
 
       const games = await scrapePsOffers(

@@ -14,6 +14,7 @@ const isRunning = ref(false);
 const logs = ref([]);
 const showModal = ref(false);
 const favName = ref('');
+const includeDiscountDate = ref(false);
 
 const logContentRef = ref(null);
 
@@ -101,8 +102,10 @@ function runScraper() {
       pages: pages.value,
       format: format.value,
       dollarRate: parseFloat(dollarRate.value) || 0,
+      dollarRate: parseFloat(dollarRate.value) || 0,
       headless: config.headless !== false,
       timeoutLevel: parseInt(config.timeoutLevel || '2', 10),
+      includeDates: includeDiscountDate.value,
     });
   } else {
     console.warn('Electron API not available');
@@ -217,6 +220,12 @@ function saveFavorite() {
           <div class="field">
             <label>Cotización Dólar (Tarjeta/Blue)</label>
             <input v-model="dollarRate" type="number" placeholder="Ej: 1135" />
+          </div>
+          <div class="field checkbox-field">
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="includeDiscountDate" />
+              ¿Incluir fecha de fin descuento? (Más lento)
+            </label>
           </div>
         </div>
       </div>
@@ -367,6 +376,24 @@ function saveFavorite() {
   border-color: var(--accent);
   background: var(--accent);
   color: white;
+  background: var(--accent);
+  color: white;
+}
+
+.checkbox-field {
+  margin-top: 10px;
+}
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.9rem;
+}
+.checkbox-label input {
+  width: auto;
+  margin: 0;
 }
 
 /* CONSOLA */

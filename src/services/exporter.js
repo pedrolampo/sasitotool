@@ -44,6 +44,7 @@ export async function exportToExcel(games, filePath, exchangeRate = null) {
 
   const tailColumns = [
     { header: 'Descuento', key: 'discount', width: 12 },
+    { header: 'Fin Descuento', key: 'discountEndDate', width: 30 },
     { header: 'URL', key: 'productUrl', width: 60 },
   ];
 
@@ -61,7 +62,9 @@ export async function exportToExcel(games, filePath, exchangeRate = null) {
       platforms: (g.platforms || []).join(', '),
       price: g.price || '',
       priceArs,
+      priceArs,
       discount: g.discount || '',
+      discountEndDate: g.discountEndDate || '',
       productUrl: g.productUrl || '',
     });
   });
@@ -78,7 +81,7 @@ export async function exportToExcel(games, filePath, exchangeRate = null) {
 export function exportToCSV(games, filePath, exchangeRate = null) {
   let header = 'Nombre;Plataformas;Precio (USD);';
   if (exchangeRate) header += `Precio (ARS) @ ${exchangeRate};`;
-  header += 'Descuento;URL\n';
+  header += 'Descuento;Fin Descuento;URL\n';
 
   const rows = games.map((g) => {
     const name = (g.name || '').replace(/;/g, ',');
@@ -91,11 +94,12 @@ export function exportToCSV(games, filePath, exchangeRate = null) {
       priceArs = value.toFixed(2);
     }
     const discount = g.discount || '';
+    const discountEndDate = g.discountEndDate || '';
     const url = g.productUrl || '';
 
     if (exchangeRate)
-      return `${name};${platforms};${price};${priceArs};${discount};${url}`;
-    return `${name};${platforms};${price};;${discount};${url}`;
+      return `${name};${platforms};${price};${priceArs};${discount};${discountEndDate};${url}`;
+    return `${name};${platforms};${price};;${discount};${discountEndDate};${url}`;
   });
 
   const csvContent = header + rows.join('\n');

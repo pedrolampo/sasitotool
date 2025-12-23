@@ -134,6 +134,71 @@ async function scrapeSinglePage(page, url, onLog) {
   }
 }
 
+async function scrapeGameDetails(page, url) {
+  try {
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+
+    try {
+      await page.waitForSelector('[data-qa$="#price"], .psw-t-title-m', {
+        timeout: 5000,
+      });
+    } catch (e) {}
+
+    await page.waitForTimeout(3000);
+
+    const discountDate = await page.evaluate(() => {
+      const candidates = Array.from(document.querySelectorAll('*'));
+      const potentialElements = document.querySelectorAll('span, div, label');
+
+      let foundText = null;
+
+      for (const el of potentialElements) {
+        const text = el.innerText || '';
+        if (
+          text &&
+          (text.includes('La oferta finaliza') || text.includes('Offer ends'))
+        ) {
+          foundText = text;
+          break;
+        }
+      }
+
+      if (!foundText) {
+        const bodyText = document.body.innerText;
+        const match = bodyText.match(
+          /(?:La oferta finaliza|Offer ends)[^\n]+/i
+        );
+        if (match) foundText = match[0];
+      }
+
+      if (foundText) {
+        const strictMatch = foundText.match(
+          /(?:La oferta finaliza|Offer ends|finaliza el)(?:\s+el)?\s+((?:\d{1,2}\/\d{1,2}\/\d{4})(?:\s+\d{1,2}:\d{2}(?:\s+GMT[-+]?\d*)?)?)/i
+        );
+
+        if (strictMatch && strictMatch[1]) {
+          return strictMatch[1].trim();
+        }
+
+        const lineMatch = foundText.match(
+          /(?:La oferta finaliza|Offer ends)(?:\s+el)?\s+([^\n]+)/i
+        );
+        if (lineMatch && lineMatch[1]) {
+          return lineMatch[1].trim();
+        }
+
+        return foundText.substring(0, 50).trim();
+      }
+
+      return null;
+    });
+
+    return discountDate;
+  } catch (e) {
+    return null;
+  }
+}
+
 export async function scrapePsOffers(
   startUrl,
   pageCount = 1,
@@ -162,7 +227,10 @@ export async function scrapePsOffers(
     maxDelay = 6000;
   }
 
-  onLog(`Config: Headless=${headlessMode}, TimeoutLevel=${timeoutLevel}`);
+  onLog(
+    `Config: Headless=${headlessMode}, TimeoutLevel=${timeoutLevel}, IncludeDates=${config.includeDates}`
+  );
+  console.log('Scraper Config:', config);
 
   const browser = await chromium.launch({
     headless: headlessMode,
@@ -201,12 +269,46 @@ export async function scrapePsOffers(
       }
 
       allGames.push(...games);
+
+      if (config.includeDates) {
+        let processedCount = 0;
+        for (const game of games) {
+          processedCount++;
+          if (game.discount && game.productUrl) {
+            onLog(
+              `   -> [${processedCount}/${
+                games.length
+              }] Leyendo detalles: ${game.name.substring(0, 20)}...`
+            );
+
+            const itemDelay = Math.floor(Math.random() * (4000 - 2000)) + 2000;
+            await page.waitForTimeout(itemDelay);
+
+            const endDate = await scrapeGameDetails(page, game.productUrl);
+            if (endDate) {
+              game.discountEndDate = endDate;
+              onLog(`      Fecha encontrada: ${endDate}`);
+            } else {
+              onLog(`      Fecha no encontrada.`);
+            }
+          }
+        }
+      } else {
+        onLog('Skipping date extraction (includeDates is false)');
+      }
     }
   } catch (globalErr) {
-    onLog(`🔥 Error CRÍTICO: ${globalErr.message}`);
+    onLog(`🔥 Error CRÍTICO (Interrupción): ${globalErr.message}`);
+    onLog(
+      `⚠️ Intentando guardar ${allGames.length} items capturados hasta el momento...`
+    );
   } finally {
-    onLog('Cerrando navegador...');
-    await browser.close();
+    if (browser) {
+      onLog('Cerrando navegador...');
+      try {
+        await browser.close();
+      } catch (closeErr) {}
+    }
   }
 
   onLog('Limpiando duplicados...');
