@@ -108,7 +108,6 @@ export async function exportNotesToExcel(notes, filePath) {
 
   sheet.columns = [
     { header: 'Fecha', key: 'date', width: 20 },
-    { header: 'Tipo', key: 'type', width: 15 },
     { header: 'Contenido', key: 'content', width: 80 },
   ];
 
@@ -128,7 +127,6 @@ export async function exportNotesToExcel(notes, filePath) {
 
     sheet.addRow({
       date: dateStr,
-      type: note.type === 'audio_transcript' ? 'Audio' : 'Texto',
       content: note.content || '',
     });
   });

@@ -5,6 +5,9 @@ import {
   query,
   orderBy,
   onSnapshot,
+  doc,
+  updateDoc,
+  deleteDoc,
 } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -44,4 +47,16 @@ export function subscribeToNotes(callback) {
   });
 
   return unsubscribe;
+}
+
+export async function updateNote(id, content) {
+  if (!db) return;
+  const noteRef = doc(db, 'notes', id);
+  await updateDoc(noteRef, { content });
+}
+
+export async function deleteNote(id) {
+  if (!db) return;
+  const noteRef = doc(db, 'notes', id);
+  await deleteDoc(noteRef);
 }
