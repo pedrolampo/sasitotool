@@ -84,8 +84,6 @@ async function scrapeSinglePage(page, url, onLog) {
           rawPriceText = containerText.replace(/[\n\r]+/g, ' ').trim();
         }
 
-        // Improved Price Regex to support USD, EUR, TRY/TL
-        // Matches: US $10, U$S 10, $10, 10 USD, 10 EUR, €10, 10 TL, 10.50 TL, etc.
         const priceMatch = rawPriceText.match(
           /((?:US\s?|U\$S\s?)?[$€£¥₺]|USD|EUR|GBP|TL|TRY|Lira)\s?[\d.,]+|[\d.,]+\s?([$€£¥₺]|USD|EUR|GBP|TL|TRY|Lira)/i
         );
@@ -109,8 +107,6 @@ async function scrapeSinglePage(page, url, onLog) {
           productUrl: link.href,
           productUrl: link.href,
           debugText: rawPriceText.substring(0, 30),
-          // We don't have config here easily unless passed, but we can just store the string
-          // The exporter will handle the conversion based on global config
         });
       }
       return results;
@@ -323,7 +319,6 @@ export async function scrapePsOffers(
     const key = g.productUrl || g.name;
     if (seenKeys.has(key)) continue;
     seenKeys.add(key);
-    // Attach config info to each game for the exporter to use
     g.originCurrency = config.originCurrency || 'USD';
     g.exchangeRate = config.exchangeRate || 0;
     deduped.push(g);

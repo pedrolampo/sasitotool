@@ -47,7 +47,6 @@ export function setupIpcHandlers(mainWindow) {
         timeoutLevel: timeoutLevel || 2,
         includeDates: includeDates === true,
         originCurrency: originCurrency || 'USD',
-        // We pass the single rate. usage depends on originCurrency in logic
         exchangeRate: exchangeRate || 0,
       };
 
@@ -160,7 +159,6 @@ export function setupIpcHandlers(mainWindow) {
         return { success: false, error: 'Guardado cancelado' };
       }
 
-      // Dynamic import to avoid circular dependencies if any, though here it's fine
       const { exportNotesToExcel } = await import('../services/exporter.js');
       await exportNotesToExcel(notes, result.filePath);
 

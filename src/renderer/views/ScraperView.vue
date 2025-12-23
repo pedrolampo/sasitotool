@@ -17,7 +17,6 @@ const favName = ref('');
 const includeDiscountDate = ref(false);
 const originCurrency = ref('USD');
 
-// Watch for currency changes to update default rate
 import { watch } from 'vue';
 watch(originCurrency, (newVal) => {
   if (newVal === 'TRY') {
@@ -25,7 +24,6 @@ watch(originCurrency, (newVal) => {
   } else if (newVal === 'EUR') {
     dollarRate.value = 1.05;
   } else {
-    // USD or ARS -> Restore saved or default ARS rate
     const saved = localStorage.getItem('sasito_settings');
     if (saved) {
       const s = JSON.parse(saved);
