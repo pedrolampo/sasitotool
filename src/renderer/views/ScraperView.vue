@@ -15,6 +15,8 @@ const logs = ref([]);
 const showModal = ref(false);
 const favName = ref('');
 const includeDiscountDate = ref(false);
+const originCurrency = ref('USD');
+const rateToUsd = ref(0.04);
 
 const logContentRef = ref(null);
 
@@ -102,10 +104,11 @@ function runScraper() {
       pages: pages.value,
       format: format.value,
       dollarRate: parseFloat(dollarRate.value) || 0,
-      dollarRate: parseFloat(dollarRate.value) || 0,
       headless: config.headless !== false,
       timeoutLevel: parseInt(config.timeoutLevel || '2', 10),
       includeDates: includeDiscountDate.value,
+      originCurrency: originCurrency.value,
+      rateToUsd: parseFloat(rateToUsd.value) || 0,
     });
   } else {
     console.warn('Electron API not available');
@@ -197,6 +200,26 @@ function saveFavorite() {
               placeholder="Ej: ofertas_ps5"
             />
           </div>
+
+          <div class="field">
+            <label>Moneda de la Página</label>
+            <select v-model="originCurrency">
+              <option value="USD">Dólar (USD)</option>
+              <option value="ARS">Pesos Arg (ARS)</option>
+              <option value="EUR">Euros (EUR)</option>
+              <option value="TRY">Liras Turcas (TRY)</option>
+            </select>
+          </div>
+
+          <div class="field" v-if="['EUR', 'TRY'].includes(originCurrency)">
+            <label>Cotización a USD (Ej: 0.04)</label>
+            <input
+              v-model="rateToUsd"
+              type="number"
+              step="0.0001"
+              placeholder="Ej: 0.04"
+            />
+          </div>
         </div>
 
         <div class="col-right">
@@ -218,9 +241,10 @@ function saveFavorite() {
             </select>
           </div>
           <div class="field">
-            <label>Cotización Dólar (Tarjeta/Blue)</label>
+            <label>Cotización Dólar (ARS únicamente)</label>
             <input v-model="dollarRate" type="number" placeholder="Ej: 1135" />
           </div>
+
           <div class="field checkbox-field">
             <label class="checkbox-label">
               <input type="checkbox" v-model="includeDiscountDate" />

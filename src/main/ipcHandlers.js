@@ -14,6 +14,8 @@ export function setupIpcHandlers(mainWindow) {
       headless,
       timeoutLevel,
       includeDates,
+      originCurrency,
+      rateToUsd,
     } = data;
 
     try {
@@ -43,6 +45,8 @@ export function setupIpcHandlers(mainWindow) {
         headless: headless !== false,
         timeoutLevel: timeoutLevel || 2,
         includeDates: includeDates === true,
+        originCurrency: originCurrency || 'USD',
+        rateToUsd: rateToUsd || 0,
       };
 
       const games = await scrapePsOffers(

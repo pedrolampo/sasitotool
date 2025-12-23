@@ -84,14 +84,16 @@ async function scrapeSinglePage(page, url, onLog) {
           rawPriceText = containerText.replace(/[\n\r]+/g, ' ').trim();
         }
 
+        // Improved Price Regex to support USD, EUR, TRY/TL
+        // Matches: US $10, U$S 10, $10, 10 USD, 10 EUR, €10, 10 TL, 10.50 TL, etc.
         const priceMatch = rawPriceText.match(
-          /((?:US\s?|U\$S\s?)?[$€£¥]|USD|EUR|GBP)\s?[\d.,]+|[\d.,]+\s?([$€£¥]|USD|EUR|GBP)/i
+          /((?:US\s?|U\$S\s?)?[$€£¥₺]|USD|EUR|GBP|TL|TRY|Lira)\s?[\d.,]+|[\d.,]+\s?([$€£¥₺]|USD|EUR|GBP|TL|TRY|Lira)/i
         );
 
         if (priceMatch) {
           price = priceMatch[0];
         } else if (
-          /\b(Gratis|Free|Incluido|Free Trial)\b/i.test(rawPriceText)
+          /\b(Gratis|Free|Incluido|Free Trial|Ücretsiz)\b/i.test(rawPriceText)
         ) {
           price = 'Gratis';
         }
@@ -105,7 +107,10 @@ async function scrapeSinglePage(page, url, onLog) {
           price,
           discount,
           productUrl: link.href,
+          productUrl: link.href,
           debugText: rawPriceText.substring(0, 30),
+          // We don't have config here easily unless passed, but we can just store the string
+          // The exporter will handle the conversion based on global config
         });
       }
       return results;
@@ -228,7 +233,7 @@ export async function scrapePsOffers(
   }
 
   onLog(
-    `Config: Headless=${headlessMode}, TimeoutLevel=${timeoutLevel}, IncludeDates=${config.includeDates}`
+    `Config: Headless=${headlessMode}, TimeoutLevel=${timeoutLevel}, IncludeDates=${config.includeDates}, Currency=${config.originCurrency}`
   );
   console.log('Scraper Config:', config);
 
@@ -318,6 +323,9 @@ export async function scrapePsOffers(
     const key = g.productUrl || g.name;
     if (seenKeys.has(key)) continue;
     seenKeys.add(key);
+    // Attach config info to each game for the exporter to use
+    g.originCurrency = config.originCurrency || 'USD';
+    g.rateToUsd = config.rateToUsd || 0;
     deduped.push(g);
   }
 

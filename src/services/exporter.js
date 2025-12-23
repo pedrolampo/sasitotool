@@ -1,8 +1,11 @@
 import ExcelJS from 'exceljs';
 import fs from 'fs';
 
-function parseUsdPrice(priceStr) {
+// Helper to identify and parse diverse currency formats
+function parsePrice(priceStr) {
   if (!priceStr) return null;
+  // Remove currency symbols ($, €, £, TL, etc.) and spaces
+  // Keep digits, dots, commas
   let num = priceStr.replace(/[^\d.,]/g, '');
   if (!num) return null;
 
@@ -27,13 +30,29 @@ export async function exportToExcel(games, filePath, exchangeRate = null) {
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet('Ofertas');
 
+  // Detect currency info from first item (as they all share the scrape run config)
+  const firstGame = games[0] || {};
+  const originCurrency = firstGame.originCurrency || 'USD';
+  const rateToUsd = firstGame.rateToUsd || 1; // 1 for USD, user value for EUR/TRY
+
   const baseColumns = [
     { header: 'Nombre', key: 'name', width: 50 },
     { header: 'Plataformas', key: 'platforms', width: 20 },
-    { header: 'Precio (USD)', key: 'price', width: 15 },
+    { header: `Precio (${originCurrency})`, key: 'price', width: 15 },
   ];
 
   const extraColumns = [];
+
+  // If NOT USD, we might want to show the converted USD price
+  if (originCurrency !== 'USD') {
+    extraColumns.push({
+      header: 'Precio (USD)',
+      key: 'priceUsd',
+      width: 15,
+    });
+  }
+
+  // If we have an ARS exchange rate (Blue/Card), show ARS price
   if (exchangeRate) {
     extraColumns.push({
       header: `Precio (ARS) @ ${exchangeRate}`,
@@ -51,27 +70,52 @@ export async function exportToExcel(games, filePath, exchangeRate = null) {
   sheet.columns = [...baseColumns, ...extraColumns, ...tailColumns];
 
   games.forEach((g) => {
-    const priceUsdNum = parseUsdPrice(g.price);
-    let priceArs = '';
-    if (exchangeRate && priceUsdNum != null) {
-      const value = priceUsdNum * exchangeRate;
-      priceArs = value.toFixed(2);
+    const rawPrice = parsePrice(g.price);
+
+    // Calculate USD value
+    let usdValue = null;
+    if (rawPrice != null) {
+      if (originCurrency === 'USD') {
+        usdValue = rawPrice;
+      } else {
+        // Apply conversion rate
+        usdValue = rawPrice * rateToUsd;
+      }
     }
-    sheet.addRow({
+
+    // Prepare row data
+    const row = {
       name: g.name || '',
       platforms: (g.platforms || []).join(', '),
-      price: g.price || '',
-      priceArs,
-      priceArs,
+      price: g.price || '', // Original string
       discount: g.discount || '',
       discountEndDate: g.discountEndDate || '',
       productUrl: g.productUrl || '',
-    });
+    };
+
+    // Add Price USD column if needed
+    if (originCurrency !== 'USD') {
+      row.priceUsd = usdValue != null ? usdValue.toFixed(2) : '';
+    }
+
+    // Add Price ARS column if needed
+    if (exchangeRate) {
+      if (usdValue != null) {
+        row.priceArs = (usdValue * exchangeRate).toFixed(2);
+      } else {
+        row.priceArs = '';
+      }
+    }
+
+    sheet.addRow(row);
   });
 
   sheet.autoFilter = {
     from: 'A1',
-    to: sheet.columns.length === 5 ? 'E1' : 'F1',
+    to: {
+      col: sheet.columns.length,
+      row: 1,
+    },
   };
   sheet.getRow(1).font = { bold: true };
 
@@ -79,7 +123,17 @@ export async function exportToExcel(games, filePath, exchangeRate = null) {
 }
 
 export function exportToCSV(games, filePath, exchangeRate = null) {
-  let header = 'Nombre;Plataformas;Precio (USD);';
+  // Detect currency info
+  const firstGame = games[0] || {};
+  const originCurrency = firstGame.originCurrency || 'USD';
+  const rateToUsd = firstGame.rateToUsd || 1;
+
+  let header = `Nombre;Plataformas;Precio (${originCurrency});`;
+
+  if (originCurrency !== 'USD') {
+    header += 'Precio (USD);';
+  }
+
   if (exchangeRate) header += `Precio (ARS) @ ${exchangeRate};`;
   header += 'Descuento;Fin Descuento;URL\n';
 
@@ -87,19 +141,36 @@ export function exportToCSV(games, filePath, exchangeRate = null) {
     const name = (g.name || '').replace(/;/g, ',');
     const platforms = (g.platforms || []).join(', ').replace(/;/g, ',');
     const price = g.price || '';
-    const priceUsdNum = parseUsdPrice(g.price);
-    let priceArs = '';
-    if (exchangeRate && priceUsdNum != null) {
-      const value = priceUsdNum * exchangeRate;
-      priceArs = value.toFixed(2);
+
+    // Calc values
+    const rawPrice = parsePrice(g.price);
+    let usdValue = null;
+
+    if (rawPrice != null) {
+      usdValue = originCurrency === 'USD' ? rawPrice : rawPrice * rateToUsd;
     }
+
+    let priceUsdStr = '';
+    if (originCurrency !== 'USD' && usdValue != null) {
+      priceUsdStr = usdValue.toFixed(2);
+    }
+
+    let priceArsStr = '';
+    if (exchangeRate && usdValue != null) {
+      priceArsStr = (usdValue * exchangeRate).toFixed(2);
+    }
+
     const discount = g.discount || '';
     const discountEndDate = g.discountEndDate || '';
     const url = g.productUrl || '';
 
-    if (exchangeRate)
-      return `${name};${platforms};${price};${priceArs};${discount};${discountEndDate};${url}`;
-    return `${name};${platforms};${price};;${discount};${discountEndDate};${url}`;
+    // Build row
+    let row = `${name};${platforms};${price};`;
+    if (originCurrency !== 'USD') row += `${priceUsdStr};`;
+    if (exchangeRate) row += `${priceArsStr};`;
+
+    row += `${discount};${discountEndDate};${url}`;
+    return row;
   });
 
   const csvContent = header + rows.join('\n');
