@@ -84,9 +84,48 @@ async function deleteNoteHandler(id) {
   }
 }
 
+async function exportAllNotes() {
+  if (notes.value.length === 0) return;
+  try {
+    const notesData = JSON.parse(JSON.stringify(notes.value));
+    const res = await window.electronAPI.exportNotes(notesData);
+    if (res.success) {
+      alert(`Notas exportadas correctamente en:\n${res.path}`);
+    } else {
+      if (res.error !== 'Guardado cancelado') alert(`Error: ${res.error}`);
+    }
+  } catch (err) {
+    console.error('Error exporting notes:', err);
+    alert('Error al exportar las notas.');
+  }
+}
+
+async function deleteSelectedNotes() {
+  if (selectedNotes.value.size === 0) return;
+  if (
+    !confirm(
+      `¿Estás seguro de que querés eliminar ${selectedNotes.value.size} nota${
+        selectedNotes.value.size !== 1 ? 's' : ''
+      }?`,
+    )
+  )
+    return;
+
+  const ids = Array.from(selectedNotes.value);
+  try {
+    for (const id of ids) {
+      await deleteNote(id);
+    }
+    selectedNotes.value.clear();
+  } catch (e) {
+    console.error('Error deleting notes:', e);
+    alert('Ocurrió un error al eliminar algunas notas.');
+  }
+}
+
 async function exportNotes() {
   const notesToExport = notes.value.filter((n) =>
-    selectedNotes.value.has(n.id)
+    selectedNotes.value.has(n.id),
   );
 
   if (notesToExport.length === 0) {
@@ -119,11 +158,11 @@ async function exportNotes() {
       <h2>Notas y Mensajes</h2>
       <button
         class="btn-primary export-btn"
-        @click="exportNotes"
+        @click="exportAllNotes"
         :disabled="loading || notes.length === 0"
       >
         <Icon name="file" size="16" />
-        Exportar a Excel
+        Exportar todo
       </button>
     </div>
 
@@ -143,9 +182,20 @@ async function exportNotes() {
         <span class="select-label">Seleccionar todas</span>
       </div>
       <div class="selection-info" v-if="selectedNotes.size > 0">
-        {{ selectedNotes.size }} seleccionada{{
-          selectedNotes.size !== 1 ? 's' : ''
-        }}
+        <span
+          >{{ selectedNotes.size }} seleccionada{{
+            selectedNotes.size !== 1 ? 's' : ''
+          }}</span
+        >
+        <button class="btn-small-action export-sel" @click="exportNotes">
+          <Icon name="file" size="13" /> Exportar
+        </button>
+        <button
+          class="btn-small-action delete-sel"
+          @click="deleteSelectedNotes"
+        >
+          <Icon name="trash" size="13" /> Eliminar
+        </button>
       </div>
     </div>
 
@@ -357,9 +407,45 @@ async function exportNotes() {
 }
 
 .selection-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 0.85rem;
-  color: var(--primary);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.btn-small-action {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 0.78rem;
   font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+}
+
+.btn-small-action.export-sel {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.25);
+}
+.btn-small-action.export-sel:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-small-action.delete-sel {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+.btn-small-action.delete-sel:hover {
+  background: #ef4444;
+  color: white;
 }
 
 .note-header-left {
