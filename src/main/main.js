@@ -1,12 +1,16 @@
+import './playwrightEnv.js';
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
 import { setupIpcHandlers } from './ipcHandlers.js';
 import pkg from 'electron-updater';
 const { autoUpdater } = pkg;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.join(process.cwd(), '.env') });
 
 let mainWindow;
 

@@ -2,6 +2,8 @@ import { ipcMain, dialog } from 'electron';
 import { scrapePsOffers } from '../services/scraper.js';
 import { exportToExcel, exportToCSV } from '../services/exporter.js';
 import * as whatsappService from '../services/whatsappService.js';
+import * as gameInfoService from '../services/gameInfoService.js';
+import * as tiendanubeService from '../services/tiendanubeService.js';
 
 export function setupIpcHandlers(mainWindow) {
   ipcMain.handle('run-scraper', async (event, data) => {
@@ -165,6 +167,52 @@ export function setupIpcHandlers(mainWindow) {
       return { success: true, path: result.filePath };
     } catch (error) {
       console.error('Error exporting notes:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('catalog:search-game', async (event, { name }) => {
+    try {
+      const candidates = await gameInfoService.searchGames(name);
+      return { success: true, candidates };
+    } catch (error) {
+      console.error('Error buscando juego:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('catalog:get-game-details', async (event, gameId) => {
+    try {
+      const game = await gameInfoService.getGameFull(gameId);
+      return { success: true, game };
+    } catch (error) {
+      console.error('Error obteniendo detalles del juego:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('catalog:fetch-image', async (event, url) => {
+    try {
+      const dataUrl = await gameInfoService.fetchImageAsDataUrl(url);
+      return { success: true, dataUrl };
+    } catch (error) {
+      console.error('Error descargando imagen:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('catalog:create-product', async (event, payload) => {
+    try {
+      const onLog = (message) => {
+        if (!mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('catalog-log', message);
+        }
+      };
+
+      const result = await tiendanubeService.createProduct(payload, onLog);
+      return { success: true, ...result };
+    } catch (error) {
+      console.error('Error creando producto en Tiendanube:', error);
       return { success: false, error: error.message };
     }
   });

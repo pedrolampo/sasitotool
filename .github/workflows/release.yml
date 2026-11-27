@@ -1,0 +1,71 @@
+# Builds the Windows installer on a real Windows runner and uploads it to a DRAFT GitHub release.
+# Trigger: push a tag matching the package.json version, e.g. `git tag v1.2.11 && git push origin v1.2.11`.
+# The draft must be published manually from GitHub before electron-updater picks it up.
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Check tag matches package.json version
+        shell: bash
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package.json version v$version"
+            exit 1
+          fi
+
+      - run: npm ci
+
+      # Install Chromium inside node_modules/playwright-core/.local-browsers so it gets bundled
+      # via `asarUnpack` (see src/main/playwrightEnv.js for how the app finds it at runtime).
+      - name: Install bundled Playwright Chromium
+        shell: bash
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: '0'
+        run: npx playwright install chromium
+
+      - name: Build renderer
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+        run: npx vite build
+
+      - name: Package installer
+        run: npx electron-builder --win --publish never
+
+      - name: Verify Chromium was bundled
+        shell: bash
+        run: |
+          dir="dist/win-unpacked/resources/app.asar.unpacked/node_modules/playwright-core/.local-browsers"
+          ls "$dir"
+          ls -d "$dir"/chromium_headless_shell-*/chrome-win*
+
+      - name: Create draft release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          installer="dist/SasitoTool-Setup-${GITHUB_REF_NAME#v}.exe"
+          gh release create "$GITHUB_REF_NAME" --draft --title "$GITHUB_REF_NAME" --generate-notes \
+            "$installer" "$installer.blockmap" dist/latest.yml

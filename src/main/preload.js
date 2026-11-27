@@ -58,4 +58,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   exportNotes: (notes) => ipcRenderer.invoke('notes:export', notes),
+
+  catalogSearchGame: (name) =>
+    ipcRenderer.invoke('catalog:search-game', { name }),
+  catalogGetGameDetails: (gameId) =>
+    ipcRenderer.invoke('catalog:get-game-details', gameId),
+  catalogFetchImage: (url) => ipcRenderer.invoke('catalog:fetch-image', url),
+  catalogCreateProduct: (payload) =>
+    ipcRenderer.invoke('catalog:create-product', payload),
+  onCatalogLog: (callback) => {
+    ipcRenderer.removeAllListeners('catalog-log');
+    const listener = (_event, value) => callback(value);
+    ipcRenderer.on('catalog-log', listener);
+    return () => ipcRenderer.removeListener('catalog-log', listener);
+  },
 });

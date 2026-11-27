@@ -6,6 +6,7 @@ import SettingsView from './views/SettingsView.vue';
 import FavoritesView from './views/FavoritesView.vue';
 import WhatsappView from './views/WhatsappView.vue';
 import NotesView from './views/NotesView.vue';
+import PublishView from './views/PublishView.vue';
 import Icon from './components/Icon.vue';
 import logoUrl from './assets/logo.webp';
 
@@ -22,6 +23,7 @@ const views = {
   favorites: FavoritesView,
   whatsapp: WhatsappView,
   notes: NotesView,
+  publish: PublishView,
 };
 
 const currentComponent = computed(() => views[currentView.value]);
@@ -149,6 +151,16 @@ if (savedSettings) {
         >
           <Icon name="file-text" size="20" />
           <span v-show="!isCollapsed">Notas</span>
+        </li>
+
+        <li
+          class="menu-item"
+          :class="{ active: currentView === 'publish' }"
+          @click="navigate('publish')"
+          :title="isCollapsed ? 'Publicar' : ''"
+        >
+          <Icon name="shopping-bag" size="20" />
+          <span v-show="!isCollapsed">Publicar</span>
         </li>
 
         <li
